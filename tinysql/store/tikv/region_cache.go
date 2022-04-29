@@ -457,8 +457,22 @@ func (c *RegionCache) LocateRegionByID(bo *Backoffer, regionID uint64) (*KeyLoca
 // Help function `RegionCache.LocateKey`
 func (c *RegionCache) GroupKeysByRegion(bo *Backoffer, keys [][]byte, filter func(key, regionStartKey []byte) bool) (map[RegionVerID][][]byte, RegionVerID, error) {
 	// YOUR CODE HERE (lab2).
-	panic("YOUR CODE HERE")
-	return nil, RegionVerID{}, nil
+	regions := make(map[RegionVerID][][]byte)
+	var first RegionVerID
+	for i, k := range keys {
+		curRegion, err := c.LocateKey(bo, k)
+		if err != nil {
+			return nil, RegionVerID{}, err
+		}
+		if filter != nil && !filter(k, curRegion.StartKey) {
+			continue
+		}
+		regions[curRegion.Region] = append(regions[curRegion.Region], k)
+		if i == 0 {
+			first = curRegion.Region
+		}
+	}
+	return regions, first, nil
 }
 
 // ListRegionIDsInKeyRange lists ids of regions in [start_key,end_key].
